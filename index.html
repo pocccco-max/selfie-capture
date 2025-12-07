@@ -6,41 +6,43 @@
   <style>
     body { font-family: Arial, sans-serif; text-align: center; margin-top: 40px; }
     video, canvas { border: 1px solid #ccc; margin: 10px; }
-    button { margin: 10px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    button { margin: 5px; padding: 10px 20px; font-size: 16px; }
   </style>
 </head>
 <body>
-  <h2>📸 Take a Selfie</h2>
-  <video id="video" width="320" height="240" autoplay></video><br>
+  <h1>Take a Selfie</h1>
+  <video id="video" width="320" height="240" autoplay></video>
+  <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+  <br>
   <button id="snap">Capture</button>
-  <canvas id="canvas" width="320" height="240"></canvas><br>
-  <button id="download">Download Selfie</button>
+  <button id="send">Send Selfie</button>
 
   <script>
-    // Access front camera
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
-      .then(stream => {
-        document.getElementById("video").srcObject = stream;
-      })
-      .catch(err => {
-        alert("Camera access denied or unavailable: " + err);
-      });
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
 
-    // Capture image
-    document.getElementById("snap").addEventListener("click", () => {
-      const canvas = document.getElementById("canvas");
-      const context = canvas.getContext("2d");
-      context.drawImage(document.getElementById("video"), 0, 0, 320, 240);
+    // Access webcam
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => { video.srcObject = stream; })
+      .catch(err => alert("Camera access denied: " + err));
+
+    // Capture frame
+    document.getElementById('snap').addEventListener('click', () => {
+      context.drawImage(video, 0, 0, 320, 240);
+      alert("✅ Selfie captured! Now click 'Send Selfie'.");
     });
 
-    // Download image to PC
-    document.getElementById("download").addEventListener("click", () => {
-      const canvas = document.getElementById("canvas");
-      const link = document.createElement("a");
-      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      link.download = `selfie-${timestamp}.png`; // unique filename
-      link.href = canvas.toDataURL("image/png");
-      link.click();
+    // Send to Flask server via ngrok
+    document.getElementById('send').addEventListener('click', () => {
+      fetch("https://maxton-unsenescent-crabbily.ngrok-free.dev/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: canvas.toDataURL("image/png") })
+      })
+      .then(res => res.text())
+      .then(msg => alert(msg))
+      .catch(err => alert("Error: " + err));
     });
   </script>
 </body>
