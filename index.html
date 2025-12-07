@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Selfie Capture</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin-top: 40px; }
+    video, canvas { border: 1px solid #ccc; margin: 10px; }
+    button { margin: 10px; padding: 10px 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h2>📸 Take a Selfie</h2>
+  <video id="video" width="320" height="240" autoplay></video><br>
+  <button id="snap">Capture</button>
+  <canvas id="canvas" width="320" height="240"></canvas><br>
+  <button id="upload">Send Selfie</button>
+
+  <script>
+    // Access front camera
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+      .then(stream => {
+        document.getElementById("video").srcObject = stream;
+      })
+      .catch(err => {
+        alert("Camera access denied or unavailable: " + err);
+      });
+
+    // Capture image
+    document.getElementById("snap").addEventListener("click", () => {
+      const canvas = document.getElementById("canvas");
+      const context = canvas.getContext("2d");
+      context.drawImage(document.getElementById("video"), 0, 0, 320, 240);
+    });
+
+    // Upload image
+    document.getElementById("upload").addEventListener("click", () => {
+      const canvas = document.getElementById("canvas");
+      const dataURL = canvas.toDataURL("image/png");
+
+      // Replace with your server endpoint
+      fetch("https://your-server.com/upload", {
+        method: "POST",
+        body: JSON.stringify({ image: dataURL }),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(res => {
+        if (res.ok) {
+          alert("✅ Selfie sent successfully!");
+        } else {
+          alert("❌ Upload failed.");
+        }
+      })
+      .catch(err => {
+        alert("Error sending selfie: " + err);
+      });
+    });
+  </script>
+</body>
+</html>
